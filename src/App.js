@@ -1,26 +1,44 @@
-import React from 'react';
-import logo from './logo.svg';
+import React, { useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import './App.css';
+import Home from './components/Home';
+import Game from './components/Game';
 
-function App() {
+const App = function(props) {
+
+  const [ isSignedIn, setIsSignedIn ] = useState(isUserSignedIn());
+
+  useEffect(() => {
+    window.firebase.auth().onAuthStateChanged((user) => {
+      setIsSignedIn(!!user);
+    });
+    return () => {
+      // clean up auth subscription
+    };
+  });
+
+  let content;
+
+  if (!isSignedIn) {
+    content = <button onClick={() => signIn()}>Sign in with Google</button>;
+  } else {
+    content = <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="game/:joinCode" element={<Game />} />
+    </Routes>
+  }
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <div>{content}</div>
   );
 }
 
 export default App;
+
+function signIn() {
+  var provider = new window.firebase.auth.GoogleAuthProvider();
+  window.firebase.auth().signInWithPopup(provider);
+}
+
+function isUserSignedIn() {
+  return !!window.firebase.auth().currentUser;
+}
